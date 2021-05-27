@@ -1,4 +1,4 @@
-﻿using UnityEngine;
+using UnityEngine;
 // ReSharper disable UnusedMember.Global
 
 public static class Easing

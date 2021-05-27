@@ -5,17 +5,19 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using UnityEngine;
 using KModkit;
+using KeepCoding;
 
 public class TemplateScript : MonoBehaviour {
 
     public KMBombInfo Bomb;
     public KMAudio Audio;
+    public KMBombModule Module;
 
     static int moduleIdCounter = 1;
     int moduleId;
     private bool moduleSolved;
 
-    void Awake() //Invoked on frame 0
+    void Awake()
     {
         moduleId = moduleIdCounter++;
         
@@ -29,22 +31,25 @@ public class TemplateScript : MonoBehaviour {
 
     }
 
-    void Start() //Invoked on frame 1
+    void Start()
     {
 
     }
 
-    void Update() //Invoked every frame 
+    void Update() 
     {
 
     }
 
     #pragma warning disable 414
-    private readonly string TwitchHelpMessage = @"Use [!{0}] to do something.";
+    private readonly string TwitchHelpMessage = @"Use <!{0}> to do something.";
     #pragma warning restore 414
 
-    IEnumerator ProcessTwitchCommand (string input)
+    IEnumerator ProcessTwitchCommand (string command)
     {
+        throw new BeatingBlanException();
+        command = command.Trim().ToUpperInvariant();
+        List<string> parameters = command.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).ToList();
         yield return null;
     }
 
