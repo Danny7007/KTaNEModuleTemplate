@@ -40,11 +40,15 @@ public class Template : MonoBehaviour {
     private readonly string TwitchHelpMessage = @"Use !{0} to do something.";
     #pragma warning restore 414
 
-    IEnumerator ProcessTwitchCommand (string Command) {
-      yield return null;
+    IEnumerator ProcessTwitchCommand (string command)
+    {
+        command = command.Trim().ToUpperInvariant();
+        List<string> parameters = command.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+        yield return null;
     }
 
-    IEnumerator TwitchHandleForcedSolve () {
-      yield return null;
+    IEnumerator TwitchHandleForcedSolve ()
+    {
+        yield return null;
     }
 }
