@@ -10,6 +10,7 @@ public class Template : MonoBehaviour {
 
     public KMBombInfo Bomb;
     public KMAudio Audio;
+    public KMBombModule Module;
 
     static int moduleIdCounter = 1;
     int moduleId;
@@ -37,7 +38,7 @@ public class Template : MonoBehaviour {
     }
 
     #pragma warning disable 414
-    private readonly string TwitchHelpMessage = @"Use !{0} to do something.";
+    private readonly string TwitchHelpMessage = @"Use <!{0} foobar> to do something.";
     #pragma warning restore 414
 
     IEnumerator ProcessTwitchCommand (string command)
