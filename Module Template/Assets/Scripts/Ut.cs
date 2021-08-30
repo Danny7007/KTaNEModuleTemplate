@@ -181,4 +181,21 @@ public static class Ut {
             default: throw new ArgumentOutOfRangeException("component", string.Format("Given component name ({0}) does match any of the components of the vector (x/y/z).", component));
         }
     }
+    /// <summary>
+    ///     Linearly interpolates from <paramref name="start"/> to <paramref name="end"/> while <paramref name="t"/> is less than 0.5, and then interpolates backwards from <paramref name="end"/> to <paramref name="start"/> while <paramref name="t"/> is greater than 0.5.
+    /// </summary>
+    /// <param name="start">The initial value to be interpolated. This value will be equal to the output when <paramref name="t"/> == 0 or <paramref name="t"/> == 1.</param>
+    /// <param name="end">The end value to be interpolated to. This value will be equal to the output when <paramref name="t"/></param>
+    /// <param name="t">The interpolant; within 0.0 to 1.0.</param>
+    /// <returns>The result of the interpolation.</returns>
+    public static float BounceLerp(float start, float end, float t)
+    {
+        if (t < 0)
+            t = 0;
+        if (t > 1)
+            t = 1;
+        if (t <= 0.5)
+            return Mathf.Lerp(start, end, t * 2);
+        else return Mathf.Lerp(end, start, t * 2 - 1);
+    }
 }
