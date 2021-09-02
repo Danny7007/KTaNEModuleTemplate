@@ -276,5 +276,21 @@ public static class Ut {
         for (int row = 0; row < height; row++)
             Debug.Log(loggingTag + " " + string.Join(separator, Enumerable.Range(row * height, width).Select(x => itemSet[grid[x] + offset].ToString()).ToArray()));
     }
+    /// <summary>
+    ///     Takes an IEnumerable <paramref name="collection"/> and cyclically shifts its entries to the right.<br></br>If the value of <paramref name="rightShift"/> is less than 0, <paramref name="collection"/> will be shifted to the left by its absolute value. 
+    /// </summary>
+    /// <typeparam name="T">The type of the collection.</typeparam>
+    /// <typeparam name="TElem">The type of the collection's items.</typeparam>
+    /// <param name="collection">The collection to be shifted.</param>
+    /// <param name="rightShift">The number of places to shift the collection right by. If this value is negative, the collection will be shifted <em>left</em> by its absolute value</param>
+    /// <returns></returns>
+    public static T ShiftRight<T, TElem>(this T collection, int rightShift) where T : IEnumerable<TElem>
+    {
+        if (collection == null)
+            throw new ArgumentNullException("collection unexpected null value");
+        if (rightShift < 0)
+            return (T)collection.Skip(-1 * rightShift).Concat(collection.Take(-1 * rightShift));
+        else return (T)collection.Skip(collection.Count() - rightShift).Concat(collection.Take(rightShift));
+    }
 
 }
