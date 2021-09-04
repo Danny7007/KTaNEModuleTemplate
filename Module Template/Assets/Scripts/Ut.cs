@@ -5,14 +5,15 @@ using System.Linq;
 using UnityEngine;
 using Rnd = UnityEngine.Random;
 
-public static class Ut {
+public static class Ut
+{
 
     /// <summary>
     /// Returns the number of times a given <typeparamref name="T"/> <paramref name="item"/> appears in <paramref name="collection"/>.
     /// </summary>
     /// <param name="collection"> The collection from which count is taken from.</param>
     /// <param name="item">The item that is counted.</param>
-	public static int CountOf<T>(this IEnumerable<T> collection, T item )
+	public static int CountOf<T>(this IEnumerable<T> collection, T item)
     {
         if (collection == null)
             throw new ArgumentNullException("collection");
@@ -97,12 +98,12 @@ public static class Ut {
         if ((input % 100).EqualsAny(11, 12, 13))
             return input + "th";
         else switch (input % 10)
-        {
-            case 1:  return input + "st";
-            case 2:  return input + "nd";
-            case 3:  return input + "rd";
-            default: return input + "th";
-        }
+            {
+                case 1: return input + "st";
+                case 2: return input + "nd";
+                case 3: return input + "rd";
+                default: return input + "th";
+            }
     }
 
     /// <summary>
@@ -169,13 +170,16 @@ public static class Ut {
             throw new ArgumentNullException("vect");
         switch (component)
         {
-            case 'X': case 'x':
+            case 'X':
+            case 'x':
                 vect.Set(value, vect.y, vect.z);
                 break;
-            case 'Y': case 'y':
+            case 'Y':
+            case 'y':
                 vect.Set(vect.x, value, vect.z);
                 break;
-            case 'Z': case 'z':
+            case 'Z':
+            case 'z':
                 vect.Set(vect.x, vect.y, value);
                 break;
             default: throw new ArgumentOutOfRangeException("component", string.Format("Given component name ({0}) does match any of the components of the vector (x/y/z).", component));
@@ -267,12 +271,12 @@ public static class Ut {
             throw new ArgumentOutOfRangeException(string.Format("Unexpected value of width, expected a positive value, received {0}.", width));
         grid = grid.Select(x => x + offset).ToArray();
         if (grid.Any(x => x < 0))
-            throw new IndexOutOfRangeException(string.Format("Unexpected value {0} found within the grid after applying offset. Values cannot be less than 0.", 
+            throw new IndexOutOfRangeException(string.Format("Unexpected value {0} found within the grid after applying offset. Values cannot be less than 0.",
                 grid.First(x => x < 0)));
         if (grid.Any(x => x >= itemSet.Count()))
             throw new IndexOutOfRangeException(string.Format("Unexpected value {0} found within the grid after applying offset. Values cannot be greater than 1 fewer than the length of charSet ({1}).",
                 grid.First(x => x >= itemSet.Count()), itemSet.Count()));
-        
+
         for (int row = 0; row < height; row++)
             Debug.Log(loggingTag + " " + string.Join(separator, Enumerable.Range(row * height, width).Select(x => itemSet[grid[x] + offset].ToString()).ToArray()));
     }
@@ -293,4 +297,23 @@ public static class Ut {
         else return (T)collection.Skip(collection.Count() - rightShift).Concat(collection.Take(rightShift));
     }
 
+    /// <summary>
+    ///     Splits an IEnumerable into several smaller IEnumerables with the same size.<br></br>If <paramref name="ignoreThrow"/> is true, the method will allow the last IEnumerable to have a size smaller than the <paramref name="groupSize"/>.
+    /// </summary>
+    /// <param name="collection">The collection to be split.</param>
+    /// <param name="groupSize">The size of each resulting IEnumerable</param>
+    /// <param name="ignoreThrow">If this value is true, a check for all groups being equal will be bypassed, allowing the final group to have a value less than the <paramref name="groupSize"/></param>
+    public static IEnumerable<IEnumerable<T>> SplitCount<T>(this IEnumerable<T> collection, int groupSize, bool ignoreThrow = false)
+    {
+        if (collection == null)
+            throw new ArgumentNullException("collection unexpected null value");
+        if (groupSize <= 0)
+            throw new ArgumentOutOfRangeException("Group size must be positive, received value " + groupSize);
+        if (collection.Count() % groupSize != 0 && !ignoreThrow)
+            throw new ArgumentException("Group size is not a multiple of the collection's count.");
+        int fullPartitionCount = (collection.Count() / groupSize);
+        for (int i = 0; i < fullPartitionCount; i++)
+            yield return collection.Skip(groupSize * i).Take(groupSize);
+        yield return collection.Skip(fullPartitionCount * groupSize);
+    }
 }
