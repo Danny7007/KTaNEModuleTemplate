@@ -140,16 +140,16 @@ public static class Ut
     /// <summary>
     /// Takes a dictionary and creates a new dictionary in which the keys of the original are the values of the output, and vice versa.
     /// </summary>
-    /// <typeparam name="K">The type of the original dictionary's keys.</typeparam>
-    /// <typeparam name="V">The type of the original dictionary's values.</typeparam>
+    /// <typeparam name="TKey">The type of the original dictionary's keys.</typeparam>
+    /// <typeparam name="TVal">The type of the original dictionary's values.</typeparam>
     /// <param name="dict">The dictionary to be inverted.</param>
     /// <returns>A new dictionary with the keys and values swapped.</returns>
     /// <exception cref="InvalidOperationException"></exception>"
-    public static Dictionary<V, K> InvertDictionary<K, V>(this Dictionary<K, V> dict)
+    public static Dictionary<TVal, TKey> InvertDictionary<TKey, TVal>(this Dictionary<TKey, TVal> dict)
     {
         if (dict == null)
             throw new ArgumentException("dict");
-        var output = new Dictionary<V, K>();
+        var output = new Dictionary<TVal, TKey>();
         if (dict.Select(x => x.Value).HasDuplicates())
             throw new InvalidOperationException("Inputted dictionary has multiple entries with the same value, making it impossible to invert.");
         foreach (var pair in dict)
