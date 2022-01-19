@@ -9,81 +9,93 @@ public static class Ut
 {
 
     /// <summary>
-    /// Returns the number of times a given <typeparamref name="T"/> <paramref name="item"/> appears in <paramref name="collection"/>.
+    /// Returns the number of times a given <typeparamref name="T"/> <paramref name="item"/> appears in <paramref name="source"/>.
     /// </summary>
-    /// <param name="collection"> The collection from which count is taken from.</param>
+    /// <param name="source"> The source from which count is taken from.</param>
     /// <param name="item">The item that is counted.</param>
-	public static int CountOf<T>(this IEnumerable<T> collection, T item)
+	public static int CountOf<T>(this IEnumerable<T> source, T item)
     {
-        if (collection == null)
-            throw new ArgumentNullException("collection");
+        if (source == null)
+            throw new ArgumentNullException("source");
         if (item == null)
             throw new ArgumentNullException("item");
-        return collection.Count(x => x.Equals(item));
+        int total = 0;
+        foreach (T element in source)
+            if (element.Equals(item))
+                total++;
+        return total;
     }
 
     /// <summary>
-    ///     Returns the entries of <paramref name="collection"/> which occur a total of <paramref name="count"/> times within <paramref name="collection"/>.
+    ///     Returns the entries of <paramref name="source"/> which occur a total of <paramref name="count"/> times within <paramref name="source"/>.
     /// </summary>
-    /// <param name="collection">The collection which is searched.</param>
+    /// <param name="source">The source which is searched.</param>
     /// <param name="count">The target number of occurences.</param>
-    public static IEnumerable<T> WhereCountIs<T>(this IEnumerable<T> collection, int count)
+    public static IEnumerable<T> WhereCountIs<T>(this IEnumerable<T> source, int count)
     {
-        if (collection == null)
-            throw new ArgumentNullException("collection");
-        return collection.Where(x => collection.CountOf(x) == count);
+        if (source == null)
+            throw new ArgumentNullException("source");
+        Dictionary<T, int> counts = new Dictionary<T, int>();
+        foreach (T element in source)
+            counts.AddToCount(element);
+        foreach (var entry in counts)
+            if (entry.Value == count)
+                yield return entry.Key;
     }
 
     /// <summary>
-    /// Determines whether or not <paramref name="collection"/> has any entries which are equal.
+    /// Determines whether or not <paramref name="source"/> has any entries which are equal.
     /// </summary>
-    /// <param name="collection"></param>
-    public static bool HasDuplicates<T>(this IEnumerable<T> collection)
+    public static bool HasDuplicates<T>(this IEnumerable<T> source)
     {
-        if (collection == null)
-            throw new ArgumentNullException("collection");
-        return collection.Distinct().Count() != collection.Count();
+        if (source == null)
+            throw new ArgumentNullException("source");
+        HashSet<T> prev = new HashSet<T>();
+        foreach (T element in source)
+            if (!prev.Add(element))
+                return true;
+        return false;
     }
 
-    /// <summary>
+    /// <returns>
     ///     Returns a random bool, either true or false.
-    /// </summary>
+    /// </returns>
     public static bool RandBool()
     {
-        return UnityEngine.Random.Range(0, 2) == 0;
+        return Rnd.Range(0, 2) == 0;
     }
 
     /// <summary>
-    ///     Returns the item in <paramref name="collection"/> which has the highest value when compared using the given <paramref name="comparer"/>.
+    ///     Returns the item in <paramref name="source"/> which has the highest value when compared using the given <paramref name="comparer"/>.
     ///     If multiple items have this value, the first will be chosen.
     /// </summary>
-    /// <param name="collection">The source from which values are taken.</param>
+    /// <param name="source">The source from which values are taken.</param>
     /// <param name="comparer">The function applied to the values.</param>
-    public static T MaxBy<T>(this IEnumerable<T> collection, Func<T, int> comparer)
+    public static T MaxBy<T>(this IEnumerable<T> source, Func<T, int> comparer)
     {
-        if (collection == null)
-            throw new ArgumentNullException("collection");
-        if (collection.Count() == 0)
+        if (source == null)
+            throw new ArgumentNullException("source");
+        if (source.Count() == 0)
             throw new InvalidOperationException("Max operation cannot be performed on an empty set");
-        var ordered = collection.OrderBy(comparer);
-        return collection.First(x => x.Equals(ordered.Last()));
+        var ordered = source.OrderBy(comparer);
+        return source.First(x => x.Equals(ordered.Last()));
     }
 
     /// <summary>
-    ///     Returns the item in <paramref name="collection"/> which has the lowest value when compared using the given <paramref name="comparer"/>.
+    ///     Returns the item in <paramref name="source"/> which has the lowest value when compared using the given <paramref name="comparer"/>.
     ///     If multiple items have this value, the first will be chosen.
     /// </summary>
-    /// <param name="collection">The source from which items are taken.</param>
+    /// <param name="source">The source from which items are taken.</param>
     /// <param name="comparer">The function applied to the items to obtain their values.</param>
-    public static T MinBy<T>(this IEnumerable<T> collection, Func<T, int> comparer)
+    public static T MinBy<T>(this IEnumerable<T> source, Func<T, int> comparer)
     {
-        if (collection == null)
-            throw new ArgumentNullException("collection");
+        if (source == null)
+            throw new ArgumentNullException("source");
 
-        if (collection.Count() == 0)
+        if (source.Count() == 0)
             throw new InvalidOperationException("Min operation cannot be performed on an empty set");
-        var ordered = collection.OrderBy(comparer);
-        return collection.First(x => x.Equals(ordered.First()));
+        var ordered = source.OrderBy(comparer);
+        return source.First(x => x.Equals(ordered.First()));
     }
     /// <summary>
     ///     Returns a modified form of <paramref name="source"/> with all instances of <paramref name="original"/> replaced with <paramref name="substitute"/>.
@@ -92,12 +104,11 @@ public static class Ut
     {
         if (source == null)
             throw new ArgumentNullException("source");
-        var iter = source.GetEnumerator();
-        while (iter.MoveNext())
-        {
-            if (iter.Current.Equals(original))
+        foreach (T element in source) 
+        { 
+            if (element.Equals(original))
                 yield return substitute;
-            else yield return iter.Current;
+            else yield return element;
         }
     }
     /// <summary>
@@ -107,13 +118,11 @@ public static class Ut
     {
         if (source == null || replacements == null)
             throw new ArgumentNullException(source == null ? "source" : "replacements");
-        var iter = source.GetEnumerator();
-        while (iter.MoveNext())
+        foreach (T element in source)
         {
-            T cur = iter.Current;
-            if (replacements.ContainsKey(cur))
-                yield return replacements[cur];
-            else yield return cur;
+            if (replacements.ContainsKey(element))
+                yield return replacements[element];
+            else yield return element;
         }
     }
     /// <summary>
@@ -123,13 +132,11 @@ public static class Ut
     {
         if (source == null || condition == null)
             throw new ArgumentNullException(source == null ? "source" : "condition");
-        var iter = source.GetEnumerator();
-        while (iter.MoveNext())
+        foreach (T element in source)
         {
-            T cur = iter.Current;
-            if (condition(cur))
+            if (condition(element))
                 yield return replacement;
-            else yield return cur;
+            else yield return element;
         }
     }
     /// <summary>
@@ -139,13 +146,11 @@ public static class Ut
     {
         if (source == null || condition == null || replacementSelector == null)
             throw new ArgumentNullException(source == null ? "source" : condition == null ? "condition" : "replacementSelector");
-        var iter = source.GetEnumerator();
-        while (iter.MoveNext())
+        foreach (T element in source)
         {
-            T cur = iter.Current;
-            if (condition(cur))
-                yield return replacementSelector(cur);
-            else yield return cur;
+            if (condition(element))
+                yield return replacementSelector(element);
+            else yield return element;
         }
     }
     /// <summary>
@@ -213,7 +218,7 @@ public static class Ut
     {
         if (input < 0)
             return string.Format("({0})th", input);
-        if ((input % 100).EqualsAny(11, 12, 13))
+        if (input % 100 > 10 && input % 100 < 14 )
             return input + "th";
         else switch (input % 10)
             {
@@ -225,34 +230,34 @@ public static class Ut
     }
 
     /// <summary>
-    /// Chooses a random item from <paramref name="collection"/> which returns true when fed into <paramref name="condition"/>.
+    /// Chooses a random item from <paramref name="source"/> which returns true when fed into <paramref name="condition"/>.
     /// </summary>
-    /// <param name="collection">The source from which items are taken from.</param>
+    /// <param name="source">The source from which items are taken from.</param>
     /// <param name="condition">The function which chosen items must obey.</param>
     /// <exception cref="InvalidOperationException"></exception>
-    public static T PickRandom<T>(this IEnumerable<T> collection, Func<T, bool> condition)
+    public static T PickRandom<T>(this IEnumerable<T> source, Func<T, bool> condition)
     {
-        if (collection == null)
-            throw new ArgumentNullException("collection");
-        if (collection.Count() == 0)
+        if (source == null)
+            throw new ArgumentNullException("source");
+        if (source.Count() == 0)
             throw new InvalidOperationException("Cannot pick an element from an empty set.");
-        IEnumerable<T> filteredCollection = collection.Where(condition);
-        if (filteredCollection.Count() == 0)
+        IEnumerable<T> filteredsource = source.Where(condition);
+        if (filteredsource.Count() == 0)
             throw new InvalidOperationException("Filtered set contains no items.");
-        return filteredCollection.ElementAt(Rnd.Range(0, filteredCollection.Count()));
+        return filteredsource.ElementAt(Rnd.Range(0, filteredsource.Count()));
     }
     /// <summary>
-    /// Chooses a random item from <paramref name="collection"/>.
+    /// Chooses a random item from <paramref name="source"/>.
     /// </summary>
-    /// <param name="collection">The source from which items are taken from.</param>
+    /// <param name="source">The source from which items are taken from.</param>
     /// <exception cref="InvalidOperationException"></exception>
-    public static T PickRandom<T>(this IEnumerable<T> collection)
+    public static T PickRandom<T>(this IEnumerable<T> source)
     {
-        if (collection == null)
-            throw new ArgumentNullException("collection");
-        if (collection.Count() == 0)
+        if (source == null)
+            throw new ArgumentNullException("source");
+        if (source.Count() == 0)
             throw new InvalidOperationException("Cannot pick an element from an empty set.");
-        return collection.ElementAt(Rnd.Range(0, collection.Count()));
+        return source.ElementAt(Rnd.Range(0, source.Count()));
     }
 
     /// <summary>
@@ -371,38 +376,49 @@ public static class Ut
             Debug.LogFormat("[{0} #{1}] {2}", displayName, moduleIdNumber, string.Join(separator, Enumerable.Range(row * height, width).Select(x => itemSet[grid[x] + offset].ToString()).ToArray()));
     }
     /// <summary>
-    ///     Takes an IEnumerable <paramref name="collection"/> and cyclically shifts its entries to the right.<br></br>If the value of <paramref name="rightShift"/> is less than 0, <paramref name="collection"/> will be shifted to the left by its absolute value. 
+    ///     Takes an IEnumerable <paramref name="source"/> and cyclically shifts its entries to the right.<br></br>If the value of <paramref name="rightShift"/> is less than 0, <paramref name="source"/> will be shifted to the left by its absolute value. 
     /// </summary>
-    /// <typeparam name="T">The type of the collection.</typeparam>
-    /// <typeparam name="TElem">The type of the collection's items.</typeparam>
-    /// <param name="collection">The collection to be shifted.</param>
-    /// <param name="rightShift">The number of places to shift the collection right by. If this value is negative, the collection will be shifted <em>left</em> by its absolute value</param>
-    public static T ShiftRight<T, TElem>(this T collection, int rightShift) where T : IEnumerable<TElem>
+    /// <typeparam name="T">The type of the source.</typeparam>
+    /// <typeparam name="TElem">The type of the source's items.</typeparam>
+    /// <param name="source">The source to be shifted.</param>
+    /// <param name="rightShift">The number of places to shift the source right by. If this value is negative, the source will be shifted <em>left</em> by its absolute value</param>
+    public static T ShiftRight<T, TElem>(this T source, int rightShift) where T : IEnumerable<TElem>
     {
-        if (collection == null)
-            throw new ArgumentNullException("collection unexpected null value");
+        if (source == null)
+            throw new ArgumentNullException("source unexpected null value");
         if (rightShift < 0)
-            return (T)collection.Skip(-rightShift).Concat(collection.Take(-rightShift));
-        else return (T)collection.Skip(collection.Count() - rightShift).Concat(collection.Take(rightShift));
+            return (T)source.Skip(-rightShift).Concat(source.Take(-rightShift));
+        else return (T)source.Skip(source.Count() - rightShift).Concat(source.Take(rightShift));
     }
 
     /// <summary>
     ///     Splits an IEnumerable into several smaller IEnumerables with the same size.<br></br>If <paramref name="ignoreThrow"/> is true, the method will allow the last IEnumerable to have a size smaller than the <paramref name="groupSize"/>.
     /// </summary>
-    /// <param name="collection">The collection to be split.</param>
+    /// <param name="source">The source to be split.</param>
     /// <param name="groupSize">The size of each resulting IEnumerable</param>
     /// <param name="ignoreThrow">If this value is true, a check for all groups being equal will be bypassed, allowing the final group to have a value less than the <paramref name="groupSize"/></param>
-    public static IEnumerable<IEnumerable<T>> Chunk<T>(this IEnumerable<T> collection, int groupSize, bool ignoreThrow = false)
+    public static IEnumerable<IEnumerable<T>> Chunk<T>(this IEnumerable<T> source, int groupSize, bool ignoreThrow = false)
     {
-        if (collection == null)
-            throw new ArgumentNullException("collection unexpected null value");
+        if (source == null)
+            throw new ArgumentNullException("source unexpected null value");
         if (groupSize <= 0)
             throw new ArgumentOutOfRangeException("Group size must be positive, received value " + groupSize);
-        if (collection.Count() % groupSize != 0 && !ignoreThrow)
-            throw new ArgumentException("Group size is not a multiple of the collection's count.");
-        int fullPartitionCount = (collection.Count() / groupSize);
+        if (source.Count() % groupSize != 0 && !ignoreThrow)
+            throw new ArgumentException("Group size is not a multiple of the source's count.");
+        int fullPartitionCount = (source.Count() / groupSize);
         for (int i = 0; i < fullPartitionCount; i++)
-            yield return collection.Skip(groupSize * i).Take(groupSize);
-        yield return collection.Skip(fullPartitionCount * groupSize);
+            yield return source.Skip(groupSize * i).Take(groupSize);
+        yield return source.Skip(fullPartitionCount * groupSize);
+    }
+    /// <summary>
+    ///     Increments the value in <paramref name="dict"/> with the key of <paramref name="item"/>. If no such key is present, adds it to the dictionary with a value of 1.
+    /// </summary>
+    public static void AddToCount<TKey>(this Dictionary<TKey, int> dict, TKey item)
+    {
+        if (dict == null)
+            throw new ArgumentNullException("dict unexpected null value");
+        if (dict.ContainsKey(item))
+            dict[item]++;
+        else dict.Add(item, 1);
     }
 }
