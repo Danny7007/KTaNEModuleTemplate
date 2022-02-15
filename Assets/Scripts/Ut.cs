@@ -36,11 +36,11 @@ public static class Ut
         if (source == null)
             throw new ArgumentNullException("source");
         Dictionary<T, int> counts = new Dictionary<T, int>();
-        foreach (T element in source)
-            counts.AddToCount(element);
-        foreach (var entry in counts)
-            if (entry.Value == count)
-                yield return entry.Key;
+        foreach (T item in source)
+            counts.IncrementDictionary(item);
+        foreach (T item in source)
+            if (counts[item] == count)
+                yield return item;
     }
 
     /// <summary>
@@ -198,6 +198,24 @@ public static class Ut
             if (condition(source[i]))
                 source[i] = replacementSelector(source[i]);
     }
+
+    /// <summary>
+    ///     Removes each element in <paramref name="removeSet"/> from <paramref name="source"/>.
+    /// </summary>
+    public static void RemoveMany<T>(this List<T> source, IEnumerable<T> removeSet)
+    {
+        foreach (T item in removeSet)
+            source.Remove(item);
+    }
+    /// <summary>
+    ///     Removes each element in <paramref name="removeSet"/> from <paramref name="source"/>.
+    /// </summary>
+    public static void RemoveMany<T>(this List<T> source, params T[] removeSet)
+    {
+        source.RemoveMany(removeSet.AsEnumerable());
+    }
+
+
     /// <summary>
     ///     Swaps the two elements in positions <paramref name="p1"/> and <paramref name="p2"/> in <paramref name="source"/>.
     /// </summary>
@@ -207,7 +225,6 @@ public static class Ut
         source[p1] = source[p2];
         source[p2] = temp;
     }
-
 
     /// <summary>
     ///     Converts an integer number <paramref name="input"/> into a string representing its ordinal form.
@@ -244,7 +261,7 @@ public static class Ut
         IEnumerable<T> filteredsource = source.Where(condition);
         if (filteredsource.Count() == 0)
             throw new InvalidOperationException("Filtered set contains no items.");
-        return filteredsource.ElementAt(Rnd.Range(0, filteredsource.Count()));
+        return filteredsource.PickRandom();
     }
     /// <summary>
     /// Chooses a random item from <paramref name="source"/>.
@@ -257,7 +274,12 @@ public static class Ut
             throw new ArgumentNullException("source");
         if (source.Count() == 0)
             throw new InvalidOperationException("Cannot pick an element from an empty set.");
-        return source.ElementAt(Rnd.Range(0, source.Count()));
+        if (source is IList<T>)
+        {
+            var list = source as IList<T>;
+            return list[Rnd.Range(0, list.Count)];
+        }
+        else return source.ElementAt(Rnd.Range(0, source.Count()));
     }
 
     /// <summary>
@@ -273,7 +295,7 @@ public static class Ut
         if (dict == null)
             throw new ArgumentException("dict");
         var output = new Dictionary<TVal, TKey>();
-        if (dict.Select(x => x.Value).HasDuplicates())
+        if (dict.Values.HasDuplicates())
             throw new InvalidOperationException("Inputted dictionary has multiple entries with the same value, making it impossible to invert.");
         foreach (var pair in dict)
             output.Add(pair.Value, pair.Key);
@@ -281,7 +303,7 @@ public static class Ut
     }
 
     /// <summary>
-    ///     Linearly interpolates from <paramref name="start"/> to <paramref name="end"/> while <paramref name="t"/> is less than 0.5, and then interpolates backwards from <paramref name="end"/> to <paramref name="start"/> while <paramref name="t"/> is greater than 0.5.
+    ///     Linearly interpolates from <paramref name="start"/> to <paramref name="end"/> while <paramref name="t"/> is less than 0.5, and then interpolates from <paramref name="end"/> to <paramref name="start"/> while <paramref name="t"/> is greater than 0.5.
     /// </summary>
     /// <param name="start">The initial value to be interpolated. This value will be equal to the output when <paramref name="t"/> == 0 or <paramref name="t"/> == 1.</param>
     /// <param name="end">The end value to be interpolated to. This value will be equal to the output when <paramref name="t"/></param>
@@ -297,31 +319,8 @@ public static class Ut
             return Mathf.Lerp(start, end, t * 2);
         else return Mathf.Lerp(end, start, t * 2 - 1);
     }
-    /// <summary>
-    ///     Returns the value of <paramref name="str"/> with its first character capitalized
-    /// </summary>
-    /// <param name="str">The string to have its first letter capitalized.</param>
-    public static string CapitalizeFirst(this string str)
-    {
-        return char.ToUpper(str[0]) + str.Substring(1);
-    }
 
-    /// <summary>
-    ///     Takes <paramref name="str"/> and inserts spaces before all capital letters other than the first.
-    /// </summary>
-    /// <param name="str">The string to be split</param>
-    /// <returns></returns>
-    public static string SplitCaps(this string str)
-    {
-        string output = "";
-        foreach (char letter in str)
-        {
-            if (char.IsUpper(letter))
-                output += ' ';
-            output += letter;
-        }
-        return output.TrimStart(' ');
-    }
+    
 
     /// <summary>
     ///     Decomposes a rectangular grid into multiple rows and sends each as a log message such that the logging is compatible with the Logfile Analyzer.
@@ -376,7 +375,7 @@ public static class Ut
             Debug.LogFormat("[{0} #{1}] {2}", displayName, moduleIdNumber, string.Join(separator, Enumerable.Range(row * height, width).Select(x => itemSet[grid[x] + offset].ToString()).ToArray()));
     }
     /// <summary>
-    ///     Takes an IEnumerable <paramref name="source"/> and cyclically shifts its entries to the right.<br></br>If the value of <paramref name="rightShift"/> is less than 0, <paramref name="source"/> will be shifted to the left by its absolute value. 
+    ///     Takes an IEnumerable <paramref name="source"/> and cyclically shifts its entries to the right by <paramref name="rightShift"/>.<br></br>If the value of <paramref name="rightShift"/> is less than 0, <paramref name="source"/> will be shifted to the left by its absolute value. 
     /// </summary>
     /// <typeparam name="T">The type of the source.</typeparam>
     /// <typeparam name="TElem">The type of the source's items.</typeparam>
@@ -413,7 +412,7 @@ public static class Ut
     /// <summary>
     ///     Increments the value in <paramref name="dict"/> with the key of <paramref name="item"/>. If no such key is present, adds it to the dictionary with a value of 1.
     /// </summary>
-    public static void AddToCount<TKey>(this Dictionary<TKey, int> dict, TKey item)
+    public static void IncrementDictionary<TKey>(this Dictionary<TKey, int> dict, TKey item)
     {
         if (dict == null)
             throw new ArgumentNullException("dict unexpected null value");
