@@ -58,7 +58,7 @@ public static class Ut
     }
 
     /// <returns>
-    ///     Returns a random bool, either true or false.
+    ///     Returns a random bool, either true or false.<br></br>Uses UnityEngine.Random for its RNG generation.
     /// </returns>
     public static bool RandBool()
     {
@@ -77,8 +77,17 @@ public static class Ut
             throw new ArgumentNullException("source");
         if (source.Count() == 0)
             throw new InvalidOperationException("Max operation cannot be performed on an empty set");
-        var ordered = source.OrderBy(comparer);
-        return source.First(x => x.Equals(ordered.Last()));
+        T rtn = default(T);
+        int rtnVal = int.MinValue;
+        foreach (T item in source) {
+            int value = comparer(item);
+            if (value > rtnVal)
+            {
+                rtnVal = value;
+                rtn = item;
+            }
+        }
+        return rtn;
     }
 
     /// <summary>
@@ -91,11 +100,20 @@ public static class Ut
     {
         if (source == null)
             throw new ArgumentNullException("source");
-
         if (source.Count() == 0)
             throw new InvalidOperationException("Min operation cannot be performed on an empty set");
-        var ordered = source.OrderBy(comparer);
-        return source.First(x => x.Equals(ordered.First()));
+        T rtn = default(T);
+        int rtnVal = int.MaxValue;
+        foreach (T item in source)
+        {
+            int value = comparer(item);
+            if (value < rtnVal)
+            {
+                rtnVal = value;
+                rtn = item;
+            }
+        }
+        return rtn;
     }
     /// <summary>
     ///     Returns a modified form of <paramref name="source"/> with all instances of <paramref name="original"/> replaced with <paramref name="substitute"/>.
@@ -200,23 +218,6 @@ public static class Ut
     }
 
     /// <summary>
-    ///     Removes each element in <paramref name="removeSet"/> from <paramref name="source"/>.
-    /// </summary>
-    public static void RemoveMany<T>(this List<T> source, IEnumerable<T> removeSet)
-    {
-        foreach (T item in removeSet)
-            source.Remove(item);
-    }
-    /// <summary>
-    ///     Removes each element in <paramref name="removeSet"/> from <paramref name="source"/>.
-    /// </summary>
-    public static void RemoveMany<T>(this List<T> source, params T[] removeSet)
-    {
-        source.RemoveMany(removeSet.AsEnumerable());
-    }
-
-
-    /// <summary>
     ///     Swaps the two elements in positions <paramref name="p1"/> and <paramref name="p2"/> in <paramref name="source"/>.
     /// </summary>
     public static void SwapPositions<T>(this IList<T> source, int p1, int p2)
@@ -272,14 +273,15 @@ public static class Ut
     {
         if (source == null)
             throw new ArgumentNullException("source");
-        if (source.Count() == 0)
+        int count = source.Count();
+        if (count == 0)
             throw new InvalidOperationException("Cannot pick an element from an empty set.");
         if (source is IList<T>)
         {
             var list = source as IList<T>;
-            return list[Rnd.Range(0, list.Count)];
+            return (list as IList<T>)[Rnd.Range(0, count)];
         }
-        else return source.ElementAt(Rnd.Range(0, source.Count()));
+        else return source.ElementAt(Rnd.Range(0, count));
     }
 
     /// <summary>
@@ -347,7 +349,7 @@ public static class Ut
     /// <summary>
     ///     Decomposes a rectangular grid of integers into multiple rows and sends each as a log message such that the logging is compatible with the Logfile Analyzer.<br></br>Each integer is indexed into <paramref name="itemSet"/> to obtain a string to represent each integer.
     /// </summary>
-    /// <param name="displayName">The module's display name, as specified in KMBombModule.ModuleDisplayName"</param>
+    /// <param name="displayName">The module's display name, as specified in [KMBombModule].ModuleDisplayName"</param>
     /// <param name="moduleIdNumber">A number unique among all instances of <paramref name="displayName"/>.</param>
     /// <param name="height">The number of rows in the grid. The output will consist of this many messages.</param>
     /// <param name="width">The number of items per row of the grid.</param>
@@ -410,8 +412,13 @@ public static class Ut
         yield return source.Skip(fullPartitionCount * groupSize);
     }
     /// <summary>
-    ///     Increments the value in <paramref name="dict"/> with the key of <paramref name="item"/>. If no such key is present, adds it to the dictionary with a value of 1.
+    /// Finds the entry in <paramref name="dict"/> with the key of <paramref name="item"/> and increments its integer value by 1.<br></br>
+    /// If <paramref name="item"/> is not already found in the dictionary, it is added to the dictionary with a value of 1.
     /// </summary>
+    /// <typeparam name="TKey">The key type of the dictionary. The dictionary's value will always be int.</typeparam>
+    /// <param name="dict">The dictionary whose items are being checked.</param>
+    /// <param name="item">The key to have its value incremented, or added to the dictionary.</param>
+    /// <remarks>This method is useful if it is needed to maintain a list of how many times a given item occurs in a sample.</remarks>
     public static void IncrementDictionary<TKey>(this Dictionary<TKey, int> dict, TKey item)
     {
         if (dict == null)
@@ -419,5 +426,31 @@ public static class Ut
         if (dict.ContainsKey(item))
             dict[item]++;
         else dict.Add(item, 1);
+    }
+    /// <summary>
+    /// Returns <paramref name="value"/> clamped within the range of [<paramref name="min"/>, <paramref name="max"/>].
+    /// </summary>
+    /// <param name="value">The value to be clamped within the range.</param>
+    /// <param name="min">The minimum value that can be returned.</param>
+    /// <param name="max">The maximum value that can be returned.</param>
+    /// <returns><paramref name="min"/> if <paramref name="value"/> is less than it,<br></br><paramref name="max"/> if <paramref name="value"/> is greater than it,<br></br><paramref name="value"/> otherwise.</returns>
+    public static int Clamp(this int value, int min, int max)
+    {
+        if (value < min)
+            return min;
+        if (value > max)
+            return max;
+        return value;
+    }
+    /// <summary>
+    /// Determines if the two spheres bounded by <paramref name="first"/> and <paramref name="other"/> overlap with one another.
+    /// </summary>
+    /// <returns>Whether or not the two colliders overlap.</returns>
+    public static bool OverlapsWith(this SphereCollider first, SphereCollider other)
+    {
+        if (first == null || other == null)
+            throw new ArgumentNullException(first == null ? "first" : "other");
+        float dist = Vector3.Distance(first.center, other.center);
+        return dist < first.radius + other.radius;
     }
 }
