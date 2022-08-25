@@ -453,4 +453,42 @@ public static class Ut
         float dist = Vector3.Distance(first.center, other.center);
         return dist < first.radius + other.radius;
     }
+    /// <summary>
+    /// Generates a coroutine which performs the task given by <paramref name="deltaAction"/> over the time specified by <paramref name="duration"/>.<br></br>
+    /// The input parameter into <paramref name="deltaAction"/> is a float within [0-1] which represents the animation's progress as a percentage.
+    /// </summary>
+    /// <param name="duration">How long the animation will take to complete.</param>
+    /// <param name="deltaAction">The action that will be executed every frame based on the animation's percent completion.</param>
+    public static IEnumerator Animation(float duration, Action<float> deltaAction)
+    {
+        float delta = 0;
+        while (delta < 1)
+        {
+            deltaAction(delta);
+            delta += Time.deltaTime / duration;
+            yield return null;
+        }
+        deltaAction(1);
+    }
+    /// <summary>
+    /// Generates a coroutine which performs the task given by <paramref name="deltaAction"/> over the time specified by <paramref name="duration"/>.<br></br>
+    /// The first input parameter into <paramref name="deltaAction"/> is a float within [0-1] which represents the animation's progress as a percentage.<br></br>
+    /// The second input parameter represents the total time elapsed.
+    /// </summary>
+    /// <param name="duration">How long the animation will take to complete.</param>
+    /// <param name="deltaAction">The action that will be executed every frame based on the animation's percent completion.</param>
+    public static IEnumerator Animation(float duration, Action<float, float> deltaAction)
+    {
+        float delta = 0;
+        float elapsed = 0;
+        while (delta < 1)
+        {
+            deltaAction(delta, elapsed);
+            delta += Time.deltaTime / duration;
+            elapsed += Time.deltaTime;
+            yield return null;
+        }
+        deltaAction(1, duration);
+    }
+
 }
